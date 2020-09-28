@@ -1,6 +1,5 @@
-package com.aditya.project.async.model;
+package com.aditya.project.async.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -14,10 +13,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class User {
+public class UserDto {
 
     private String id;
+
+    private String username;
 
     private String name;
 
@@ -29,9 +29,9 @@ public class User {
 
     private String location;
 
-    private String bio;
+    private String description;
 
-    private int public_repos;
+    private int repositories;
 
     private int followers;
 

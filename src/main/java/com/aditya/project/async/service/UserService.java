@@ -1,29 +1,20 @@
 package com.aditya.project.async.service;
 
 import com.aditya.project.async.model.User;
-import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
+import com.aditya.project.async.model.UserEntity;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.List;
+import java.util.Optional;
 
-@Service
-@RequiredArgsConstructor
-public class UserService {
+public interface UserService {
 
-    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+    User findGithubUser(String username);
 
-    private final GithubLookupService githubLookupService;
+    Optional<UserEntity> findByUsername(String username);
 
-    public User findGithubUser(String username) {
-        try {
-            CompletableFuture<User> user = githubLookupService.findUser(username);
-            logger.info("Found User with username : " + username);
-            return user.get();
-        } catch (Exception e) {
-            logger.error("User not found with username : " + username);
-            return null;
-        }
-    }
+    List<UserEntity> findAll();
+
+    void save(UserEntity userEntity);
+
+    void delete(UserEntity userEntity);
 }
