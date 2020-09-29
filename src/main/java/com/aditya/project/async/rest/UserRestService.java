@@ -38,9 +38,6 @@ public class UserRestService {
     }
 
     public void deleteUser(String username) {
-        Optional<UserEntity> userEntity = userService.findByUsername(username);
-        if(userEntity.isPresent()) {
-            userService.delete(userEntity.get());
-        }
+        userService.delete(username);
     }
 }
