@@ -24,7 +24,7 @@ public class UserMapper {
         userEntity.setRepositories(user.getPublic_repos());
         userEntity.setFollowers(user.getFollowers());
         userEntity.setFollowing(user.getFollowing());
-        userEntity.setCreated_at(user.getCreated_at());
+        userEntity.setCreatedAt(user.getCreated_at());
         return userEntity;
     }
 
@@ -41,14 +41,14 @@ public class UserMapper {
         userDto.setRepositories(userEntity.getRepositories());
         userDto.setFollowers(userEntity.getFollowers());
         userDto.setFollowing(userEntity.getFollowing());
-        userDto.setCreated_at(userEntity.getCreated_at());
+        userDto.setCreatedAt(userEntity.getCreatedAt());
         return userDto;
     }
 
     public List<UserDto> map(List<UserEntity> userEntities) {
         return userEntities
                 .stream()
-                .map(userEntity -> map(userEntity))
+                .map(this::map)
                 .collect(Collectors.toList());
     }
 }

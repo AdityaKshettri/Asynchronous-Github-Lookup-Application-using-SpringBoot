@@ -1,5 +1,7 @@
 package com.aditya.project.async.service;
 
+import com.aditya.project.async.exception.ErrorCatalog;
+import com.aditya.project.async.exception.ServiceException;
 import com.aditya.project.async.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,9 @@ public class GithubLookupService {
         log.info("Looking for : " + username);
         String url = String.format("https://api.github.com/users/%s", username);
         User results = restTemplate.getForObject(url, User.class);
+        if(results == null) {
+            throw new ServiceException(ErrorCatalog.GITHUB_USER_NOT_FOUND_ERROR);
+        }
         return CompletableFuture.completedFuture(results);
     }
 }

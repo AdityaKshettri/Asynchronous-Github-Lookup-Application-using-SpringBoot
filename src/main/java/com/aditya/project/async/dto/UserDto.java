@@ -1,5 +1,9 @@
 package com.aditya.project.async.dto;
 
+import com.aditya.project.async.helper.LocalDateTimeDeserializer;
+import com.aditya.project.async.helper.LocalDateTimeSerializer;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -37,5 +41,7 @@ public class UserDto {
 
     private int following;
 
-    private LocalDateTime created_at;
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+    private LocalDateTime createdAt;
 }
