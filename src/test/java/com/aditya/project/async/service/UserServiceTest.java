@@ -1,6 +1,8 @@
 package com.aditya.project.async.service;
 
 import com.aditya.project.async.dao.UserDao;
+import com.aditya.project.async.exception.ErrorCatalog;
+import com.aditya.project.async.exception.ServiceException;
 import com.aditya.project.async.model.User;
 import com.aditya.project.async.model.UserEntity;
 import org.junit.Test;
@@ -16,6 +18,8 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -104,6 +108,36 @@ public class UserServiceTest {
         assertThat(actual).isEqualTo(user);
     }
 
+    @Test(expected = ServiceException.class)
+    public void should_find_github_user_by_username_throws_exception_when_user_not_found() {
+        //Given
+        when(githubLookupService.findUser(USERNAME)).thenReturn(CompletableFuture.completedFuture(null));
+        try {
+            //When
+            userService.findGithubUser(USERNAME);
+        } catch (ServiceException e) {
+            //Then
+            assertThat(e.getErrorCatalog()).isEqualTo(ErrorCatalog.GITHUB_USER_NOT_FOUND_ERROR);
+            assertThat(e.getMessage()).isEqualTo(ErrorCatalog.GITHUB_USER_NOT_FOUND_ERROR.getMessage());
+            throw e;
+        }
+    }
+
+    @Test(expected = ServiceException.class)
+    public void should_find_github_user_by_username_throws_exception_when_github_api_error() {
+        //Given
+        doThrow(new RuntimeException()).when(githubLookupService).findUser(USERNAME);
+        try {
+            //When
+            userService.findGithubUser(USERNAME);
+        } catch (ServiceException e) {
+            //Then
+            assertThat(e.getErrorCatalog()).isEqualTo(ErrorCatalog.GITHUB_API_ERROR);
+            assertThat(e.getMessage()).isEqualTo(ErrorCatalog.GITHUB_API_ERROR.getMessage());
+            throw e;
+        }
+    }
+
     @Test
     public void should_find_user_entity_by_username_nominal_case() {
         //Given
@@ -113,6 +147,31 @@ public class UserServiceTest {
         Optional<UserEntity> actual = userService.findByUsername(USERNAME);
         //Then
         assertThat(actual).isEqualTo(Optional.of(userEntity));
+    }
+
+    @Test
+    public void should_find_user_entity_by_username_when_user_not_found() {
+        //Given
+        when(userDao.findByUsername(USERNAME)).thenReturn(Optional.empty());
+        //When
+        Optional<UserEntity> actual = userService.findByUsername(USERNAME);
+        //Then
+        assertThat(actual).isEqualTo(Optional.empty());
+    }
+
+    @Test(expected = ServiceException.class)
+    public void should_find_user_entity_by_username_throws_exception_when_dao_error() {
+        //Given
+        doThrow(new RuntimeException()).when(userDao).findByUsername(USERNAME);
+        try {
+            //When
+            userService.findByUsername(USERNAME);
+        } catch (ServiceException e) {
+            //Then
+            assertThat(e.getErrorCatalog()).isEqualTo(ErrorCatalog.APPLICATION_ERROR);
+            assertThat(e.getMessage()).isEqualTo(ErrorCatalog.APPLICATION_ERROR.getMessage());
+            throw e;
+        }
     }
 
     @Test
@@ -126,6 +185,21 @@ public class UserServiceTest {
         assertThat(actual).isEqualTo(userEntities);
     }
 
+    @Test(expected = ServiceException.class)
+    public void should_find_all_user_entities_throws_exception_when_dao_error() {
+        //Given
+        doThrow(new RuntimeException()).when(userDao).findAll();
+        try {
+            //When
+            userService.findAll();
+        } catch (ServiceException e) {
+            //Then
+            assertThat(e.getErrorCatalog()).isEqualTo(ErrorCatalog.APPLICATION_ERROR);
+            assertThat(e.getMessage()).isEqualTo(ErrorCatalog.APPLICATION_ERROR.getMessage());
+            throw e;
+        }
+    }
+
     @Test
     public void should_save_user_entity_nominal_case() {
         //Given
@@ -137,6 +211,40 @@ public class UserServiceTest {
         verify(userDao).save(userEntity);
     }
 
+    @Test(expected = ServiceException.class)
+    public void should_save_user_entity_throws_exception_when_user_already_exists() {
+        //Given
+        UserEntity userEntity = givenUserEntity();
+        when(userDao.findByUsername(USERNAME)).thenReturn(Optional.of(userEntity));
+        try {
+            //When
+            userService.save(userEntity);
+        } catch (ServiceException e) {
+            //Then
+            verify(userDao, never()).save(userEntity);
+            assertThat(e.getErrorCatalog()).isEqualTo(ErrorCatalog.USER_ALREADY_EXISTS_ERROR);
+            assertThat(e.getMessage()).isEqualTo(ErrorCatalog.USER_ALREADY_EXISTS_ERROR.getMessage());
+            throw e;
+        }
+    }
+
+    @Test(expected = ServiceException.class)
+    public void should_save_user_entity_throws_exception_when_dao_error() {
+        //Given
+        UserEntity userEntity = givenUserEntity();
+        doThrow(new RuntimeException()).when(userDao).findByUsername(USERNAME);
+        try {
+            //When
+            userService.save(userEntity);
+        } catch (ServiceException e) {
+            //Then
+            verify(userDao, never()).save(userEntity);
+            assertThat(e.getErrorCatalog()).isEqualTo(ErrorCatalog.APPLICATION_ERROR);
+            assertThat(e.getMessage()).isEqualTo(ErrorCatalog.APPLICATION_ERROR.getMessage());
+            throw e;
+        }
+    }
+
     @Test
     public void should_delete_user_entity_nominal_case() {
         //Given
@@ -146,5 +254,39 @@ public class UserServiceTest {
         userService.delete(USERNAME);
         //Then
         verify(userDao).delete(userEntity);
+    }
+
+    @Test(expected = ServiceException.class)
+    public void should_delete_user_entity_throws_exception_when_user_not_found() {
+        //Given
+        UserEntity userEntity = givenUserEntity();
+        when(userDao.findByUsername(USERNAME)).thenReturn(Optional.empty());
+        try {
+            //When
+            userService.delete(USERNAME);
+        } catch (ServiceException e) {
+            //Then
+            verify(userDao, never()).delete(userEntity);
+            assertThat(e.getErrorCatalog()).isEqualTo(ErrorCatalog.USER_NOT_FOUND_ERROR);
+            assertThat(e.getMessage()).isEqualTo(ErrorCatalog.USER_NOT_FOUND_ERROR.getMessage());
+            throw e;
+        }
+    }
+
+    @Test(expected = ServiceException.class)
+    public void should_delete_user_entity_throws_exception_when_dao_error() {
+        //Given
+        UserEntity userEntity = givenUserEntity();
+        doThrow(new RuntimeException()).when(userDao).findByUsername(USERNAME);
+        try {
+            //When
+            userService.delete(USERNAME);
+        } catch (ServiceException e) {
+            //Then
+            verify(userDao, never()).delete(userEntity);
+            assertThat(e.getErrorCatalog()).isEqualTo(ErrorCatalog.APPLICATION_ERROR);
+            assertThat(e.getMessage()).isEqualTo(ErrorCatalog.APPLICATION_ERROR.getMessage());
+            throw e;
+        }
     }
 }

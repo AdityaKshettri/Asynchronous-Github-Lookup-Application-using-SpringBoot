@@ -25,6 +25,9 @@ public class UserService {
     public User findGithubUser(String username) {
         try {
             CompletableFuture<User> user = githubLookupService.findUser(username);
+            if(user.get() == null) {
+                throw new ServiceException(ErrorCatalog.GITHUB_USER_NOT_FOUND_ERROR);
+            }
             return user.get();
         } catch (ServiceException e) {
             log.error("User not found in Github with username : " + username);

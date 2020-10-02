@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.concurrent.CompletableFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -41,6 +42,8 @@ public class GithubLookupServiceTest {
 
     private static final LocalDateTime CREATED_AT = LocalDateTime.now();
 
+    private static final String GITHUB_API_URL = "https://api.github.com/users/%s";
+
     @InjectMocks
     private GithubLookupService githubLookupService;
 
@@ -67,11 +70,19 @@ public class GithubLookupServiceTest {
     public void should_find_github_user_nominal_case() {
         //Given
         User user = givenUser();
-        String url = String.format("https://api.github.com/users/%s", USERNAME);
+        String url = String.format(GITHUB_API_URL, USERNAME);
         when(restTemplate.getForObject(url, User.class)).thenReturn(user);
         //When
         CompletableFuture<User> actual = githubLookupService.findUser(USERNAME);
         //Then
         assertThat(actual).isCompletedWithValue(user);
+    }
+
+    @Test(expected = Exception.class)
+    public void should_find_github_user_throws_exception_when_github_api_error() {
+        //Given
+        String url = String.format(GITHUB_API_URL, USERNAME);
+        doThrow(new RuntimeException()).when(restTemplate).getForObject(url, User.class);
+        githubLookupService.findUser(USERNAME);
     }
 }
